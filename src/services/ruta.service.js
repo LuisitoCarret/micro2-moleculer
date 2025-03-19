@@ -1,11 +1,11 @@
-import { getRuta, updateRuta,updatePedidos} from "../controllers/rutas.controller.js"
+import { getRutas, updateRuta,updatePedidos} from "../controllers/rutas.controller.js"
 
 
 export default{
     name:"rutas",
     actions:{
         getOne:async (ctx)=>{
-            return await getRuta(ctx.params.id);
+            return await getRutas(ctx.params.id);
         },
         putRuta:async(ctx)=>{
             return await updateRuta(ctx);

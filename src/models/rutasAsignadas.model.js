@@ -7,6 +7,10 @@ const rutasAsignadas=sequelize.define('rutasAsignadas',{
         primaryKey:true,
         allowNull:false
     },
+    id_repartidor:{
+        type:DataTypes.INTEGER,
+        allowNull:false
+    },
     id_ruta:{
         type:DataTypes.INTEGER,
         allowNull:false

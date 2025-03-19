@@ -6,21 +6,23 @@ import Direcciones from "../models/direcciones.model.js";
 import Rutas from "../models/rutas.model.js";
 import Joi from "joi";
 import { rutaSchema } from "../validation/ruta.validation.js";
+import { pedidosSchema } from "../validation/pedidos.validation.js";
 
 
 const getRutaSchema=Joi.number().integer().positive().required();
 
-export const getRuta = async (id) => {
-  logger.info("Iniciando servicio  getRuta");
+export const getRutas = async (id_repartidor) => {
+  logger.info("Iniciando servicio getRutasPorRepartidor");
+  
+  const { error } = getRutaSchema.validate(id_repartidor);
+  if (error) {
+    logger.warn(`Validación fallida: ${error.message}`);
+    throw new Error(`Datos inválidos: ${error.message}`);
+  }
+
   try {
-    const {error}=getRutaSchema.validate(id);
-
-    if (error) {
-      logger.warn(`Validación fallida: ${error.message}`);
-      throw new Error(`ID de ruta inválido: ${error.message}`);
-    }
-
-    const ruta = await rutasAsignadas.findByPk(id, {
+    const rutasAsignadasList = await rutasAsignadas.findAll({
+      where: { id_repartidor },
       include: [
         {
           model: Rutas,
@@ -45,13 +47,12 @@ export const getRuta = async (id) => {
       ],
     });
 
-    if (!ruta) {
-      logger.warn("Ruta no encontrada");
-      throw new Error("Ruta no encontrada");
+    if (!rutasAsignadasList.length) {
+      logger.warn("No se encontraron rutas asignadas para este repartidor");
+      throw new Error("No se encontraron rutas asignadas");
     }
 
-    // Formateamos los datos para la respuesta JSON
-    const rutaFormateada = {
+    const rutasFormateadas = rutasAsignadasList.map((ruta) => ({
       id: ruta.id_rutaasignada,
       nombre: ruta.Ruta.nombre_ruta,
       fechaAsignada: ruta.fecha_asignacion,
@@ -60,9 +61,7 @@ export const getRuta = async (id) => {
       estado: ruta.status || "No iniciado",
       pedidos: ruta.Pedidos.map((pedido) => ({
         id: pedido.id_pedido,
-        nombre: `Pedido ${pedido.id_pedido}: ${
-          pedido.Cliente?.nombre || "Sin nombre"
-        }`,
+        nombre: `Pedido ${pedido.id_pedido}: ${pedido.Cliente?.nombre || "Sin nombre"}`,
         direccion: pedido.Cliente?.Direcciones
           ? pedido.Cliente.Direcciones[0]?.direccioncompleta
           : "Sin dirección",
@@ -70,39 +69,50 @@ export const getRuta = async (id) => {
         telefono: pedido.Cliente ? pedido.Cliente.telefono : "Sin teléfono",
         status: pedido.status || "Pendiente",
       })),
+    }));
+
+    const respuestaFinal = {
+      id_repartidor,
+      rutas_asignadas: rutasFormateadas,
     };
 
-    logger.info("Ruta asignada obtenida correctamente");
-    return rutaFormateada;
+    logger.info("Rutas asignadas del repartidor obtenidas correctamente");
+    return respuestaFinal;
+
   } catch (error) {
-    logger.error("Error al obtener ruta asignada:", error);
+    logger.error("Error al obtener rutas asignadas del repartidor:", error);
     throw new Error("Error al obtener los datos. Inténtelo de nuevo.");
   }
 };
 
 
 export const updateRuta = async (ctx) => {
-  logger.info("Iniciando servicio updateRuta");
+  logger.info("Iniciando servicio updateRutaByRepartidor");
 
-  const { error } = rutaSchema.validate(ctx.params);
-  if (error) {
-    logger.warn(`Validación fallida: ${error.message}`);
-    throw new Error(`Datos inválidos: ${error.message}`);
+  const  id_repartidor = ctx.params.id;
+  const {id_ruta,estado}=ctx.params;
+
+  if (!id_repartidor || !id_ruta || !estado) {
+    logger.warn("Faltan datos");
+    throw new Error("Se requieren 'id_repartidor', 'id_ruta' y 'estado'");
   }
 
-  const { id, estado } = ctx.params;
   try {
-    const rutaup = await rutasAsignadas.findByPk(id);
+    // Verificamos que la ruta esté asignada a ese repartidor
+    const rutaAsignada = await rutasAsignadas.findOne({
+      where: { id_rutaasignada: id_ruta, id_repartidor },
+    });
 
-    if (!rutaup) {
-      logger.warn("Ruta no encontrada, algo salio mal dentro del servicio");
-      throw new Error("Ruta no encontrada");
+    if (!rutaAsignada) {
+      logger.warn(`La ruta ${id_ruta} no está asignada al repartidor ${id_repartidor}`);
+      throw new Error("Ruta no encontrada para ese repartidor");
     }
 
-    rutaup.status = estado;
-    await rutaup.save();
+    // Actualizamos
+    rutaAsignada.status = estado;
+    await rutaAsignada.save();
 
-    logger.info(`Estado de la ruta ${id} actualizado a: ${estado}`);
+    logger.info(`Ruta ${id_ruta} del repartidor ${id_repartidor} actualizada a: ${estado}`);
     return { mensaje: "Estado de la ruta actualizado correctamente" };
   } catch (error) {
     logger.error("Error al actualizar estado de la ruta:", error);
@@ -111,41 +121,48 @@ export const updateRuta = async (ctx) => {
 };
 
 
-export const updatePedidos = async (ctx) => {
 
-  const { error } = updatePedidos.validate(ctx.params);
-  if (error) {
-    logger.warn(`Validación fallida: ${error.message}`);
-    throw new Error(`Datos inválidos: ${error.message}`);
+export const updatePedidos = async (ctx) => {
+  logger.info("Contenido completo de ctx.params:", JSON.stringify(ctx.params, null, 2));
+
+  const id_rutaasignada = ctx.params.id; // ID desde la URL
+  const { pedidos } = ctx.params;       // Pedidos desde el cuerpo
+
+  if (!id_rutaasignada || !pedidos) {
+    throw new Error("El ID de ruta asignada y los pedidos son obligatorios.");
   }
 
-  const { pedidos } = ctx.params;
-  
-  if (!pedidos || !Array.isArray(pedidos)) {
-    logger.warn("El cuerpo de la solicitud debe incluir un arreglo 'pedidos'");
-    throw new Error(
-      "El cuerpo de la solicitud debe incluir un arreglo 'pedidos'."
-    );
+  if (!Array.isArray(pedidos)) {
+    throw new Error("El campo 'pedidos' debe ser un arreglo.");
   }
 
   try {
-    // Iteramos sobre la lista de pedidos y actualizamos su estado
     for (const pedidoData of pedidos) {
-      const { id, estado } = pedidoData;
+      const { id_pedido, status } = pedidoData;
 
-      const pedido = await Pedidos.findByPk(id);
+      if (!id_pedido || !status) {
+        logger.warn(`Faltan datos en el pedido: ${JSON.stringify(pedidoData)}`);
+        continue; // Saltar al siguiente pedido si faltan datos
+      }
+
+      const pedido = await Pedidos.findOne({
+        where: { id_pedido, rutaasignadaid: id_rutaasignada }, // Corregido con el nombre correcto de la columna
+      });
+
       if (pedido) {
-        pedido.status = estado;
+        // Actualizar el estado del pedido
+        pedido.status = status;
         await pedido.save();
-        logger.info(`Pedido ${id} actualizado a estado: ${estado}`);
+        logger.info(`Pedido ${id_pedido} actualizado a estado: ${status}`);
       } else {
-        logger.warn(`Pedido con ID ${id} no encontrado, se omitió.`);
+        logger.warn(`Pedido ${id_pedido} no encontrado en ruta asignada ${id_rutaasignada}.`);
       }
     }
 
-    return { mensaje: "Estados de los pedidos actualizados correctamente" };
+    return { mensaje: "Estados de los pedidos actualizados correctamente." };
   } catch (error) {
-    logger.error("Error al actualizar estados de los pedidos:", error);
+    logger.error("Error al actualizar pedidos:", error.message);
     throw new Error("Error al actualizar estados de los pedidos.");
   }
 };
+

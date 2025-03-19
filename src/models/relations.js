@@ -4,6 +4,7 @@ import Pedidos from "./pedidos.model.js";
 import rutasAsignadas from "./rutasAsignadas.model.js";
 import Rutas from "./rutas.model.js";
 import rutasDirecciones from "./rutasDirecciones.model.js";
+import Repartidores from "./repartidor.model.js";
 
 
 try {
@@ -31,6 +32,10 @@ Clientes.hasMany(Direcciones,{foreignKey:'id_cliente'})
    //Direcciones → Rutas Direcciones (1:N)
 rutasDirecciones.belongsTo(Direcciones, { foreignKey: 'id_direccion'});
 Direcciones.hasMany(rutasDirecciones, { foreignKey: 'id_direccion' });
+
+  //
+  rutasAsignadas.belongsTo(Repartidores,{foreignKey:'id_repartidor'});
+  Repartidores.hasMany(rutasAsignadas,{foreignKey:'id_repartidor'});
 
 
 } catch (error) {
