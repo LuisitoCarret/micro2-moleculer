@@ -86,10 +86,9 @@ export const getRutas = async (id_repartidor) => {
 };
 
 
-export const updateRuta = async (ctx) => {
+export const updateRuta = async (ctx,id_repartidor) => {
   logger.info("Iniciando servicio updateRutaByRepartidor");
 
-  const  id_repartidor = ctx.params.id;
   const {id_ruta,estado}=ctx.params;
 
   if (!id_repartidor || !id_ruta || !estado) {
@@ -122,10 +121,8 @@ export const updateRuta = async (ctx) => {
 
 
 
-export const updatePedidos = async (ctx) => {
-  logger.info("Contenido completo de ctx.params:", JSON.stringify(ctx.params, null, 2));
+export const updatePedidos = async (ctx,id_repartidor,id_rutaasignada) => {
 
-  const id_rutaasignada = ctx.params.id; // ID desde la URL
   const { pedidos } = ctx.params;       // Pedidos desde el cuerpo
 
   if (!id_rutaasignada || !pedidos) {
@@ -137,6 +134,16 @@ export const updatePedidos = async (ctx) => {
   }
 
   try {
+
+    const rutaAsignada = await rutasAsignadas.findOne({
+      where: { id_rutaasignada, id_repartidor },
+    });
+
+    if (!rutaAsignada) {
+      logger.warn(`La ruta ${id_rutaasignada} no pertenece al repartidor ${id_repartidor}`);
+      throw new Error("Ruta no asignada a este repartidor.");
+    }
+
     for (const pedidoData of pedidos) {
       const { id_pedido, status } = pedidoData;
 

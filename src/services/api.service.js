@@ -15,7 +15,7 @@ export default {
         cors: {
           origin: "*",
           methods: ["GET","PUT"],
-          allowedHeaders: ["Content-Type", "Authorization"],
+          allowedHeaders: ["Content-Type", "Authorization","id-repartidor"],
           credentials: true,
         },
         rateLimit: {
@@ -24,14 +24,14 @@ export default {
           headers: true,
         },
         aliases: {
-          "GET /rutas/:id": "rutas.getOne",
-          "PUT /rutas/:id":"rutas.putRuta",
-          "PUT /rutas/pedidos/:id":"rutas.putPedidos"
+          "GET /rutas": "rutas.getOne",
+          "PUT /estado":"rutas.putRuta",
+          "PUT /pedidos":"rutas.putPedidos"
         },
-         //onBeforeCall(ctx, route, req, res) {
-          //res.setHeader("X-CSRF-Token", req.csrfToken());
+         onBeforeCall(ctx, route, req, res) {
+          ctx.meta.headers=req.headers;
        
-        //},
+        },
       },
     ],
     use: [
