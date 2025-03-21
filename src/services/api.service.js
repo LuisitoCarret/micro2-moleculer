@@ -3,7 +3,6 @@ import helmet from "helmet";
 //import csurf from "csurf";
 //import cookieParser from "cookie-parser";
 //import jwt from "jsonwebtoken";
-//import { checkPermission } from "../validation/rbac.js";
 
 export default {
   name: "api",
@@ -15,7 +14,7 @@ export default {
         cors: {
           origin: "*",
           methods: ["GET","PUT"],
-          allowedHeaders: ["Content-Type", "Authorization","id-repartidor"],
+          allowedHeaders: ["Content-Type", "Authorization","id-repartidor","id-rutaasingnada"],
           credentials: true,
         },
         rateLimit: {

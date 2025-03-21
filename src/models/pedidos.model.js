@@ -25,6 +25,14 @@ const Pedidos = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    direccion:{
+      type:DataTypes.STRING,
+      allowNull:null
+    },
+    horaentrega:{
+      type:DataTypes.STRING,
+      allowNull:false
+    }
   },
   {
     timestamps: false,

@@ -18,7 +18,7 @@ rutasAsignadas.belongsTo(Rutas, { foreignKey: 'id_ruta'});
 Rutas.hasMany(rutasAsignadas, { foreignKey: 'id_ruta' });
 
    //Rutas → Rutas Direcciones (1:N)
-rutasDirecciones.belongsTo(Rutas, { foreignKey: 'id_ruta'});
+rutasDirecciones.belongsTo(Rutas, { foreignKey: 'id_direccion'});
 Rutas.hasMany(rutasDirecciones, { foreignKey: 'id_ruta' });
 
    //Clientes → Pedidos (1:N)

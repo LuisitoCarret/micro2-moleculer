@@ -7,7 +7,7 @@ const rutasDirecciones=sequelize.define('rutasDirecciones',{
         primaryKey:true,
         allowNull:false
     },
-    id_ruta:{
+    id_direccion:{
         type:DataTypes.INTEGER,
         primaryKey:true,
         allowNull:false

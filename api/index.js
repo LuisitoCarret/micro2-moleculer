@@ -27,10 +27,7 @@ const broker = new ServiceBroker({
       await broker.start();
       logger.info("Broker y servicios iniciados con éxito");
     } catch (error) {
-      logger.error("Error al iniciar el broker o los servicios:", {
-        message:error.message,
-        stack:error.stack,
-      });
+      logger.error({ err: error }, "Error al iniciar el broker y los servicios");
     }
   };
   
