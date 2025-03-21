@@ -1,8 +1,8 @@
 import { ServiceBroker } from "moleculer";
-import logger from "./src/validation/logger.js";
-import rutaService from "./src/services/ruta.service.js";
-import apiService from "./src/services/api.service.js";
-import associateModels from "./src/models/relations.js";
+import logger from "../src/validation/logger.js";
+import rutaService from "../src/services/ruta.service.js";
+import apiService from "../src/services/api.service.js";
+import associateModels from "../src/models/relations.js";
 
 associateModels(); 
 
