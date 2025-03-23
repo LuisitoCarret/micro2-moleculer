@@ -15,7 +15,6 @@ const getRutaSchema=Joi.number().integer().positive().required();
 
 export const getRutas = async (id_repartidor) => {
   logger.info("Iniciando servicio getRutasPorRepartidor");
-  console.log("ID repartidor recibido:", id_repartidor);
 
   const { error } = getRutaSchema.validate(id_repartidor);
   if (error) {
@@ -67,7 +66,6 @@ export const getRutas = async (id_repartidor) => {
       ],
     });
     
-    console.log("Rutas asignadas encontradas:", rutasAsignadasList.length);
 
     if (!rutasAsignadasList.length) {
       logger.warn("No se encontraron rutas asignadas para este repartidor");
@@ -75,38 +73,11 @@ export const getRutas = async (id_repartidor) => {
     }
 
     const rutasFormateadas = rutasAsignadasList.map((ruta, indexRuta) => {
-      console.log(`\n---- Ruta ${indexRuta + 1} ----`);
-      console.log("ID Ruta asignada:", ruta.id_rutaasignada);
-      console.log("Nombre ruta:", ruta.Ruta?.nombre_ruta || "No llega nombre_ruta");
-      console.log("Fecha asignación:", ruta.fecha_asignacion);
-      console.log("Kilómetros:", ruta.kilometros);
-      console.log("Tiempo estimado:", ruta.tiempo);
-      console.log("Status:", ruta.status);
-
-      const primerPedido = ruta.Pedidos[0];
-      console.log("Primer pedido:", primerPedido ? primerPedido.id_pedido : "No hay pedidos");
-      const direccionGeneral = primerPedido?.direccion || 
-                               primerPedido?.Cliente?.Direcciones[0]?.direccioncompleta || 
-                               "Dirección no disponible";
-      console.log("Dirección general:", direccionGeneral);
-      
-
-      ruta.Pedidos.forEach((pedido, indexPedido) => {
-        console.log(`  - Pedido ${indexPedido + 1}:`);
-        console.log("    ID pedido:", pedido.id_pedido);
-        console.log("    Nombre cliente:", pedido.Cliente?.nombre || "Sin nombre");
-        console.log("    Teléfono:", pedido.Cliente?.telefono || "Sin teléfono");
-        console.log("    Dirección:", pedido.direccion || pedido.Cliente?.Direcciones[0]?.direccioncompleta || "Dirección no disponible");
-        console.log("    Kilos tortillas:", pedido.kilostortillas);
-        console.log("    Hora entrega:", pedido.horaentrega);
-        console.log("    Status:", pedido.status);
-      });
-
       return {
         id: ruta.id_rutaasignada,
         nombre: ruta.Ruta.nombre_ruta,
         fechaAsignada: ruta.fecha_asignacion,
-        direccion: (ruta.Pedidos[0]?.Cliente?.Direcciones[0]?.direccioncompleta) || "Dirección no disponible",
+        direccion: ruta.Pedidos[0]?.Cliente?.Direcciones[0]?.direccioncompleta || "Dirección no disponible",
         totalEntregas: ruta.Pedidos.length,
         kilometraje: `${ruta.kilometros} km`,
         tiempoEstimado: `${ruta.tiempo} hrs`,
@@ -128,7 +99,6 @@ export const getRutas = async (id_repartidor) => {
       rutas_asignadas: rutasFormateadas,
     };
 
-    console.log("Respuesta final enviada:", JSON.stringify(respuestaFinal, null, 2));
     logger.info("Rutas asignadas del repartidor obtenidas correctamente");
     return respuestaFinal;
 
