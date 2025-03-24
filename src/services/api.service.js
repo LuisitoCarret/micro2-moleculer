@@ -14,7 +14,7 @@ export default {
         cors: {
           origin: "*",
           methods: ["GET","PUT"],
-          allowedHeaders: ["Content-Type", "Authorization","id-repartidor","id-rutaasingnada","Cookie"],
+          allowedHeaders: ["Content-Type", "Authorization","id-repartidor","id-rutaasingnada"],
           credentials: true,
         },
         rateLimit: {
