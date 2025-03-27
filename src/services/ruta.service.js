@@ -13,19 +13,23 @@ export default {
 
       if (!idRepartidorHeader) {
         logger.error("No se recibió el encabezado 'id-repartidor'");
-        throw new Error("No se recibieron todos los datos");
+        ctx.meta.$statusCode = 400;
+        ctx.meta.$statusMessage = "Faltan dato";
+        return { message: "No se recibieron todos los datos. Verifique su solicitud" };
       }
 
       const id_repartidor = parseInt(idRepartidorHeader, 10);
 
-      return await getRutas(id_repartidor);
+      return await getRutas(id_repartidor,ctx);
     },
     putRuta: async (ctx) => {
       const idRepartidorHeader = ctx.meta.headers["id-repartidor"];
 
       if (!idRepartidorHeader) {
         logger.error("No se recibió el encabezado 'id-repartidor'");
-        throw new Error("Falta el encabezado 'id-repartidor'");
+        ctx.meta.$statusCode = 400;
+        ctx.meta.$statusMessage = "Falta dato";
+        return { message: "No se encontro el dato solicitado." };
       }
 
       const id_repartidor = parseInt(idRepartidorHeader, 10);
@@ -37,7 +41,9 @@ export default {
 
       if (!idRepartidorHeader || !idRutaAsignadaHeader) {
         logger.error("Faltan encabezados 'id-repartidor' o 'id-rutaasignada'");
-        throw new Error("Faltan encabezados requeridos");
+        ctx.meta.$statusCode = 400;
+        ctx.meta.$statusMessage = "Faltan datos";
+        return { message: "Solicitud incompleta. Datos requeridos ausentes." };
       }
 
       const id_repartidor = parseInt(idRepartidorHeader, 10);

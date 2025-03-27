@@ -1,3 +1,4 @@
+import logger from "../validation/logger.js";
 import Clientes from "./clientes.model.js";
 import Direcciones from "./direcciones.model.js";
 import Pedidos from "./pedidos.model.js";
@@ -6,43 +7,39 @@ import Rutas from "./rutas.model.js";
 import rutasDirecciones from "./rutasDirecciones.model.js";
 import Repartidores from "./repartidor.model.js";
 
+export default function associateModels() {
+  try {
+    // Relación: Pedidos → Rutas Asignadas
+    Pedidos.belongsTo(rutasAsignadas, { foreignKey: 'rutaasignadaid' });
+    rutasAsignadas.hasMany(Pedidos, { foreignKey: 'rutaasignadaid' });
 
-try {
-    //Rutas Asignadas → Pedidos (1:N)
-Pedidos.belongsTo(rutasAsignadas, { foreignKey: 'rutaasignadaid'});
-rutasAsignadas.hasMany(Pedidos, { foreignKey: 'rutaasignadaid' });
+    // Relación: Rutas Asignadas → Rutas
+    rutasAsignadas.belongsTo(Rutas, { foreignKey: 'id_ruta' });
+    Rutas.hasMany(rutasAsignadas, { foreignKey: 'id_ruta' });
 
+    // Relación: Rutas Direcciones → Rutas
+    rutasDirecciones.belongsTo(Rutas, { foreignKey: 'id_ruta' });
+    Rutas.hasMany(rutasDirecciones, { foreignKey: 'id_ruta' });
 
-    //Rutas → Rutas Asignadas (1:N)
-rutasAsignadas.belongsTo(Rutas, { foreignKey: 'id_ruta'});
-Rutas.hasMany(rutasAsignadas, { foreignKey: 'id_ruta' });
+    // Relación: Pedidos → Clientes
+    Pedidos.belongsTo(Clientes, { foreignKey: 'cliente_id' });
+    Clientes.hasMany(Pedidos, { foreignKey: 'cliente_id' });
 
-   //Rutas → Rutas Direcciones (1:N)
-rutasDirecciones.belongsTo(Rutas, { foreignKey: 'id_ruta'});
-Rutas.hasMany(rutasDirecciones, { foreignKey: 'id_ruta' });
+    // Relación: Direcciones → Clientes
+    Direcciones.belongsTo(Clientes, { foreignKey: 'id_cliente' });
+    Clientes.hasMany(Direcciones, { foreignKey: 'id_cliente' });
 
-   //Clientes → Pedidos (1:N)
-Pedidos.belongsTo(Clientes, { foreignKey: 'cliente_id'});
-Clientes.hasMany(Pedidos, { foreignKey: 'cliente_id' });
+    // Relación: Rutas Direcciones → Direcciones
+    rutasDirecciones.belongsTo(Direcciones, { foreignKey: 'id_direccion' });
+    Direcciones.hasMany(rutasDirecciones, { foreignKey: 'id_direccion' });
 
-   //Clientes → Direcciones (1:N)
-Direcciones.belongsTo(Clientes, { foreignKey: 'id_cliente'});
-Clientes.hasMany(Direcciones,{foreignKey:'id_cliente'})
+    // Relación: Rutas Asignadas → Repartidores
+    rutasAsignadas.belongsTo(Repartidores, { foreignKey: 'id_repartidor' });
+    Repartidores.hasMany(rutasAsignadas, { foreignKey: 'id_repartidor' });
 
-   //Direcciones → Rutas Direcciones (1:N)
-rutasDirecciones.belongsTo(Direcciones, { foreignKey: 'id_direccion'});
-Direcciones.hasMany(rutasDirecciones, { foreignKey: 'id_direccion' });
-
-  //
-  rutasAsignadas.belongsTo(Repartidores,{foreignKey:'id_repartidor'});
-  Repartidores.hasMany(rutasAsignadas,{foreignKey:'id_repartidor'});
-
-
-} catch (error) {
-    logger.error("Error al obtener ruta asignada:", error);
-    console.error("Error detallado:", error); // Para capturar más detalles
-    throw new Error("Error al obtener los datos. Inténtelo de nuevo.");
+    logger.info("Relaciones entre modelos definidas correctamente.");
+  } catch (error) {
+    logger.error("Error al asociar modelos:", error);
+    throw new Error("No se pudieron asociar los datos.");
+  }
 }
-
-
-export default function associateModels() {}

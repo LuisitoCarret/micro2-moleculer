@@ -8,8 +8,8 @@ const sequelize = new Sequelize(process.env.DATABASE, process.env.USER,process.e
   port:process.env.PORT,
   dialect: "postgres",
   dialectModule:pg,
-  ssl:true
- 
+  ssl:true,
+  logging:false
 });
 
 const conectarDB = async () => {

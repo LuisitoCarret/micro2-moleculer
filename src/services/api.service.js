@@ -1,8 +1,5 @@
 import ApiGateway from "moleculer-web";
 import helmet from "helmet";
-//import csurf from "csurf";
-//import cookieParser from "cookie-parser";
-//import jwt from "jsonwebtoken";
 
 export default {
   name: "api",

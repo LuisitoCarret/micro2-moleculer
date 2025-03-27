@@ -11,15 +11,17 @@ import { rutaSchema } from "../validation/ruta.validation.js";
 import { pedidosSchema } from "../validation/pedidos.validation.js";
 
 
-const getRutaSchema=Joi.number().integer().positive().required();
+const getRutaSchema=Joi.number().strict().integer().positive().required();
 
-export const getRutas = async (id_repartidor) => {
+export const getRutas = async (id_repartidor,ctx) => {
   logger.info("Iniciando servicio getRutasPorRepartidor");
 
   const { error } = getRutaSchema.validate(id_repartidor);
   if (error) {
     logger.warn(`Validación fallida: ${error.message}`);
-    throw new Error("Datos inválidos. Inténtelo de nuevo");
+    ctx.meta.$statusCode = 400;
+    ctx.meta.$statusMessage = "Validación fallida";
+    return { message: "Datos invalidos. Intentelo de nuevo." };
   }
 
   try {
@@ -69,7 +71,9 @@ export const getRutas = async (id_repartidor) => {
 
     if (!rutasAsignadasList.length) {
       logger.warn("No se encontraron rutas asignadas para este repartidor");
-      throw new Error("No se encontraron los datos solicitados. Intentelo de nuevo");
+      ctx.meta.$statusCode = 404;
+      ctx.meta.$statusMessage = "No encontrado";
+      return { message: "No se encontraron los datos solicitados." };
     }
 
     const rutasFormateadas = rutasAsignadasList.map((ruta, indexRuta) => {
@@ -104,7 +108,9 @@ export const getRutas = async (id_repartidor) => {
 
   } catch (error) {
     logger.error({ err: error }, "Error al obtener las rutas asignadas del repartidor");
-    throw new Error("Error al obtener los datos. Inténtelo de nuevo.");
+    ctx.meta.$statusCode = 500;
+    ctx.meta.$statusMessage = "Error interno del servidor";
+    return { message: "Error al obtener los datos. Intentelo de nuevo." };
   }
 };
 
@@ -119,12 +125,16 @@ export const updateRuta = async (ctx,id_repartidor) => {
 
   if(error){
     logger.warn("Validación fallida al actualizar ruta:", error.details[0].message);
-    throw new Error("El formato es incorrecto. Intentelo de nuevo");
+    ctx.meta.$statusCode = 400;
+    ctx.meta.$statusMessage = "Validación fallida";
+    return { message: "El formato es incorrecto. Intentelo de nuevo." };
   }
 
   if (!id_repartidor || !id_ruta || !estado) {
     logger.warn("Se requieren 'id_repartidor', 'id_ruta' y 'estado'");
-    throw new Error("Faltan datos. Intentelo de nuevo");
+    ctx.meta.$statusCode = 400;
+    ctx.meta.$statusMessage = "Falta de datos";
+    return { message: "Faltan algunos datos. Intentelo de nuevo." };
   }
 
   try {
@@ -135,7 +145,9 @@ export const updateRuta = async (ctx,id_repartidor) => {
 
     if (!rutaAsignada) {
       logger.warn(`La ruta ${id_ruta} no está asignada al repartidor ${id_repartidor}`);
-      throw new Error("Dato no encontrado. Intentelo de nuevo");
+      ctx.meta.$statusCode = 404;
+      ctx.meta.$statusMessage = "No encontrado";
+      return { message: "Dato no encontrado. Intentelo de nuevo." };
     }
 
    const sanitizeRuta=sanitizeHtml(estado, { allowedTags: [], allowedAttributes: {} });
@@ -144,10 +156,12 @@ export const updateRuta = async (ctx,id_repartidor) => {
     await rutaAsignada.save();
 
     logger.info(`Ruta ${id_ruta} del repartidor ${id_repartidor} actualizada a: ${estado}`);
-    return { mensaje: "Actualizacion realizada con exito" };
+    return { mensaje: "Operacion realizada con exito" };
   } catch (error) {
     logger.error({ err: error }, "Error al actualizar estado de la ruta");
-    throw new Error("No se pudieron actualizar los datos. Intentelo de nuevo");
+    ctx.meta.$statusCode = 500;
+    ctx.meta.$statusMessage = "Error interno del servidor";
+    return { message: "No se pudieron actualizar los datos. Intentelo de nuevo." };
   }
 };
 
@@ -161,13 +175,17 @@ export const updatePedidos = async (ctx,id_repartidor,id_rutaasignada) => {
 
   if (error) {
     logger.warn(`Error de validación de pedidos: ${error.message}`);
-    throw new Error("Datos inválidos. Intentelo de nuevo");
+    ctx.meta.$statusCode = 400;
+    ctx.meta.$statusMessage = "Validación fallida";
+    return { message: "Datos inválidos. Inténtelo de nuevo." };
   }
 
 
   if (!id_rutaasignada || !pedidos) {
     logger.warn("El ID de ruta asignada y los pedidos son obligatorios.");
-    throw new Error ("Faltan datos. Por favor ingrese todos los datos");
+    ctx.meta.$statusCode = 400;
+    ctx.meta.$statusMessage = "Datos faltantes";
+    return { message: "Datos no completos. Intentelo de nuevo." };
   }
 
   try {
@@ -178,7 +196,9 @@ export const updatePedidos = async (ctx,id_repartidor,id_rutaasignada) => {
 
     if (!rutaAsignada) {
       logger.warn(`La ruta ${id_rutaasignada} no pertenece al repartidor ${id_repartidor}`);
-      throw new Error("Dato incorrecto o no disponible en esta solicitud");
+      ctx.meta.$statusCode = 404;
+      ctx.meta.$statusMessage = "No encontrado";
+      return { message: "Dato incorrecto o no disponible en esta solicitud" };
     }
 
     for (const pedidoData of pedidos) {
@@ -186,8 +206,9 @@ export const updatePedidos = async (ctx,id_repartidor,id_rutaasignada) => {
 
       if (!id_pedido || !status) {
         logger.warn(`Faltan datos en el pedido: ${JSON.stringify(pedidoData)}`);
-        throw new Error("Faltan datos por agregar. Intentelo de nuevo");
-        continue; // Saltar al siguiente pedido si faltan datos
+        ctx.meta.$statusCode = 400;
+        ctx.meta.$statusMessage = "Faltan datos";
+        return { message: "Faltan datos por agregar. Intentelo de nuevo." };
       }
 
       const pedido = await Pedidos.findOne({
@@ -205,10 +226,12 @@ export const updatePedidos = async (ctx,id_repartidor,id_rutaasignada) => {
       }
     }
 
-    return { mensaje: "Actualizacion realizada con exito" };
+    return { mensaje: "Operacion realizada con exito" };
   } catch (error) {
     logger.error({ err: error }, "Error al actualizar pedidos");
-    throw new Error("No se puedo actualizar los datos. Intentelo de nuevo");
+    ctx.meta.$statusCode = 500;
+    ctx.meta.$statusMessage = "Error interno del servidor";
+    return { message: "No se pudo realizar la operacion. Intentelo de nuevo." };
   }
 };
 
