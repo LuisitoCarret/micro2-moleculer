@@ -121,18 +121,15 @@ export const updateRuta = async (ctx,id_repartidor) => {
 
   const {id_ruta,estado}=ctx.params;
 
-  const parsedRutaId = Number(id_ruta);
-
-  if (
-    !parsedRutaId ||
-    !Number.isInteger(parsedRutaId) ||
-    parsedRutaId <= 0
-  ) {
-    logger.warn(`ID de ruta inválido detectado: ${id_ruta}`);
+  if (typeof id_ruta !== "string" || !/^\d+$/.test(id_ruta)) {
+    logger.warn(`ID de ruta con formato inválido: ${id_ruta}`);
     ctx.meta.$statusCode = 400;
     ctx.meta.$statusMessage = "Dato inválido";
-    return { message: "ID de ruta no válido. Inténtelo de nuevo." };
+    return { message: "El dato ingresado no es correcto. Intentelo de nuevo" };
   }
+
+
+  const parsedRutaId = Number(id_ruta);
 
   const {error}=rutaSchema.validate({id_ruta:parsedRutaId,estado});
 
