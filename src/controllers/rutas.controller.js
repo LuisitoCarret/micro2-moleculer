@@ -121,6 +121,8 @@ export const updateRuta = async (ctx,id_repartidor) => {
 
   const {id_ruta,estado}=ctx.params;
 
+  const parsedIdRuta = Number(id_ruta);
+
   const {error}=rutaSchema.validate({id_ruta,estado});
 
   if(error){
@@ -130,21 +132,14 @@ export const updateRuta = async (ctx,id_repartidor) => {
     return { message: "El formato es incorrecto. Intentelo de nuevo." };
   }
 
-  if (!id_repartidor || !id_ruta || !estado) {
-    logger.warn("Se requieren 'id_repartidor', 'id_ruta' y 'estado'");
-    ctx.meta.$statusCode = 400;
-    ctx.meta.$statusMessage = "Falta de datos";
-    return { message: "Faltan algunos datos. Intentelo de nuevo." };
-  }
-
   try {
     // Verificamos que la ruta esté asignada a ese repartidor
     const rutaAsignada = await rutasAsignadas.findOne({
-      where: { id_rutaasignada: id_ruta, id_repartidor },
+      where: { id_rutaasignada: parsedIdRuta, id_repartidor },
     });
 
     if (!rutaAsignada) {
-      logger.warn(`La ruta ${id_ruta} no está asignada al repartidor ${id_repartidor}`);
+      logger.warn(`La ruta ${parsedIdRuta} no está asignada al repartidor ${id_repartidor}`);
       ctx.meta.$statusCode = 404;
       ctx.meta.$statusMessage = "No encontrado";
       return { message: "Dato no encontrado. Intentelo de nuevo." };
@@ -155,7 +150,7 @@ export const updateRuta = async (ctx,id_repartidor) => {
     rutaAsignada.status = sanitizeRuta;
     await rutaAsignada.save();
 
-    logger.info(`Ruta ${id_ruta} del repartidor ${id_repartidor} actualizada a: ${estado}`);
+    logger.info(`Ruta ${parsedIdRuta} del repartidor ${id_repartidor} actualizada a: ${estado}`);
     return { mensaje: "Operacion realizada con exito" };
   } catch (error) {
     logger.error({ err: error }, "Error al actualizar estado de la ruta");
@@ -203,16 +198,22 @@ export const updatePedidos = async (ctx,id_repartidor,id_rutaasignada) => {
 
     for (const pedidoData of pedidos) {
       const { id_pedido, status } = pedidoData;
+      const parsedId = Number(id_pedido);
 
-      if (!id_pedido || !status) {
-        logger.warn(`Faltan datos en el pedido: ${JSON.stringify(pedidoData)}`);
+      if (
+        !id_pedido ||
+        !status ||
+        !Number.isInteger(parsedId) ||
+        parsedId <= 0
+      ) {
+        logger.warn(`ID de pedido inválido o datos faltantes: ${JSON.stringify(pedidoData)}`);
         ctx.meta.$statusCode = 400;
-        ctx.meta.$statusMessage = "Faltan datos";
-        return { message: "Faltan datos por agregar. Intentelo de nuevo." };
+        ctx.meta.$statusMessage = "Dato inválido";
+        return { message: "Los datos del pedido no son válidos. Inténtelo de nuevo." };
       }
 
       const pedido = await Pedidos.findOne({
-        where: { id_pedido, rutaasignadaid: id_rutaasignada }, // Corregido con el nombre correcto de la columna
+        where: { id_pedido:parsedId, rutaasignadaid: id_rutaasignada }, // Corregido con el nombre correcto de la columna
       });
 
       const sanitizeStatus=sanitizeHtml(status,{ allowedTags: [], allowedAttributes: {} });
@@ -220,9 +221,9 @@ export const updatePedidos = async (ctx,id_repartidor,id_rutaasignada) => {
         // Actualizar el estado del pedido
         pedido.status = sanitizeStatus;
         await pedido.save();
-        logger.info(`Pedido ${id_pedido} actualizado a estado: ${status}`);
+        logger.info(`Pedido ${parsedId} actualizado a estado: ${status}`);
       } else {
-        logger.warn(`Pedido ${id_pedido} no encontrado en ruta asignada ${id_rutaasignada}.`);
+        logger.warn(`Pedido ${parsedId} no encontrado en ruta asignada ${id_rutaasignada}.`);
       }
     }
 
