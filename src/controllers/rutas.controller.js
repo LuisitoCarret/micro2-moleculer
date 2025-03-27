@@ -121,9 +121,20 @@ export const updateRuta = async (ctx,id_repartidor) => {
 
   const {id_ruta,estado}=ctx.params;
 
-  const parsedIdRuta = Number(id_ruta);
+  const parsedRutaId = Number(id_ruta);
 
-  const {error}=rutaSchema.validate({id_ruta,estado});
+  if (
+    !parsedRutaId ||
+    !Number.isInteger(parsedRutaId) ||
+    parsedRutaId <= 0
+  ) {
+    logger.warn(`ID de ruta inválido detectado: ${id_ruta}`);
+    ctx.meta.$statusCode = 400;
+    ctx.meta.$statusMessage = "Dato inválido";
+    return { message: "ID de ruta no válido. Inténtelo de nuevo." };
+  }
+
+  const {error}=rutaSchema.validate({id_ruta:parsedRutaId,estado});
 
   if(error){
     logger.warn("Validación fallida al actualizar ruta:", error.details[0].message);
@@ -135,11 +146,11 @@ export const updateRuta = async (ctx,id_repartidor) => {
   try {
     // Verificamos que la ruta esté asignada a ese repartidor
     const rutaAsignada = await rutasAsignadas.findOne({
-      where: { id_rutaasignada: parsedIdRuta, id_repartidor },
+      where: { id_rutaasignada: parsedRutaId, id_repartidor },
     });
 
     if (!rutaAsignada) {
-      logger.warn(`La ruta ${parsedIdRuta} no está asignada al repartidor ${id_repartidor}`);
+      logger.warn(`La ruta ${parsedRutaId} no está asignada al repartidor ${id_repartidor}`);
       ctx.meta.$statusCode = 404;
       ctx.meta.$statusMessage = "No encontrado";
       return { message: "Dato no encontrado. Intentelo de nuevo." };
@@ -150,7 +161,7 @@ export const updateRuta = async (ctx,id_repartidor) => {
     rutaAsignada.status = sanitizeRuta;
     await rutaAsignada.save();
 
-    logger.info(`Ruta ${parsedIdRuta} del repartidor ${id_repartidor} actualizada a: ${estado}`);
+    logger.info(`Ruta ${parsedRutaId} del repartidor ${id_repartidor} actualizada a: ${estado}`);
     return { mensaje: "Operacion realizada con exito" };
   } catch (error) {
     logger.error({ err: error }, "Error al actualizar estado de la ruta");
