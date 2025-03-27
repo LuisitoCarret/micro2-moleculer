@@ -121,17 +121,7 @@ export const updateRuta = async (ctx,id_repartidor) => {
 
   const {id_ruta,estado}=ctx.params;
 
-  if (typeof id_ruta !== "string" || !/^\d+$/.test(id_ruta)) {
-    logger.warn(`ID de ruta con formato inválido: ${id_ruta}`);
-    ctx.meta.$statusCode = 400;
-    ctx.meta.$statusMessage = "Dato inválido";
-    return { message: "El dato ingresado no es correcto. Intentelo de nuevo" };
-  }
-
-
-  const parsedRutaId = Number(id_ruta);
-
-  const {error}=rutaSchema.validate({id_ruta:parsedRutaId,estado});
+  const {error}=rutaSchema.validate({id_ruta,estado});
 
   if(error){
     logger.warn("Validación fallida al actualizar ruta:", error.details[0].message);
@@ -139,6 +129,8 @@ export const updateRuta = async (ctx,id_repartidor) => {
     ctx.meta.$statusMessage = "Validación fallida";
     return { message: "El formato es incorrecto. Intentelo de nuevo." };
   }
+
+  const parsedRutaId = Number(id_ruta); // Solo parseamos si pasó Joi
 
   try {
     // Verificamos que la ruta esté asignada a ese repartidor
