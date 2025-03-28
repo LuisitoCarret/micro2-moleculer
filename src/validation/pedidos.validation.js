@@ -5,7 +5,7 @@ export const pedidosSchema = Joi.object({
       .items(
         Joi.object({
           id_pedido: Joi.number().strict().integer().positive().required(),
-          status: Joi.string().strict().min(5).max(20).required(),
+          status: Joi.string().valid("pendiente", "en camino", "completado", "cancelado").required(),
         })
       )
       .required(),
