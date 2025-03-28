@@ -16,7 +16,7 @@ export default {
         },
         rateLimit: {
           window: 60 * 1000,
-          limit: 5,
+          limit: 6,
           headers: true,
         },
         aliases: {
