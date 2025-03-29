@@ -1,8 +1,6 @@
-import {
-  getRutas,
-  updateRuta,
-  updatePedidos,
-} from "../controllers/rutas.controller.js";
+import { getRutas } from "../controllers/rutas.controller.js";
+import { updateRuta } from "../controllers/updateRuta.controller.js";
+import { updatePedidos } from "../controllers/updatePedido.controller.js";
 import logger from "../validation/logger.js";
 
 export default {
@@ -12,9 +10,9 @@ export default {
       const idRepartidorHeader = ctx.meta.headers["id-repartidor"];
 
       if (!idRepartidorHeader) {
-        logger.error("No se recibió el encabezado 'id-repartidor'");
+        logger.error("No se recibio el encabezado 'id-repartidor'");
         ctx.meta.$statusCode = 400;
-        ctx.meta.$statusMessage = "Faltan dato";
+        ctx.meta.$statusMessage = "Faltan datos";
         return { message: "No se recibieron todos los datos. Verifique su solicitud" };
       }
 
@@ -28,7 +26,7 @@ export default {
       if (!idRepartidorHeader) {
         logger.error("No se recibió el encabezado 'id-repartidor'");
         ctx.meta.$statusCode = 400;
-        ctx.meta.$statusMessage = "Falta dato";
+        ctx.meta.$statusMessage = "Falta datos";
         return { message: "No se encontro el dato solicitado." };
       }
 
